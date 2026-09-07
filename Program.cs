@@ -1,11 +1,16 @@
-﻿Console.WriteLine("Welcome to the world of disorderly conduct! " +
-                  "You are an old delinquent who never learnt to remedy their ways," +
+﻿namespace TextAdventure_Solo_2;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Welcome to the world of disorderly conduct! " +
+                  "You are an old delinquent who never learnt to remedy their ways, " +
                   "in a world ruled by the terrible 'redeemed'. You are trapped in a rehabilitation room, " +
                   "and must escape into the outside where once more you may wreak havoc upon the world.");
 
 //Adding extra empty lines with the writeline directly below. Purely for aesthetics.
-Console.WriteLine("");
-Console.WriteLine("Tell me... ");
+        Console.WriteLine("\nTell me... ");
 
 string action1 = "check";
 string action2 = "pick up";
@@ -56,3 +61,5 @@ Console.ReadLine();
 
 // return response;
 // }
+    }
+}
