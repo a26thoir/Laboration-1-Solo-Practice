@@ -186,7 +186,7 @@ class Program
         if (direction == "right")
         {
             string direction2 = "";
-            direction2 = TwoChoices("The door is locked. What will you do? [use key], [go right] ", "use key", "go right");
+            direction2 = TwoChoices("The door is locked. What will you do? [use key], [go left] ", "use key", "go left");
             
             if (direction2 == "use key" && player.Items.Contains("key"))
             {
@@ -207,7 +207,7 @@ class Program
                 player.Location = "thirdroom";
             }
 
-            else if (direction2 == "go right" && player.Items.Contains("key"))
+            else if (direction2 == "go left" && player.Items.Contains("key"))
             {
                 Console.Write("\nWho in their right mind would waste a perfectly fine key on such an unassuming lock? " +
                               "You hold on to your key and head on through the far less consumable-consuming door on your left.");
@@ -216,7 +216,7 @@ class Program
 
             else
             {
-                Console.Write("\nLacking a key, you figure it more reasonable to take the rightmost path instead of " +
+                Console.Write("\nLacking a key, you figure it more reasonable to take the leftmost path instead of " +
                               "wasting time on something impassable.");
                 player.Location = "thirdroom";
             }
@@ -230,6 +230,27 @@ class Program
 
     static void LockedRoom(Player player)
     {
+        Console.Clear();
+        Console.WriteLine("Inside the locked room you find a shiny sword!\n");
+        if (AskYesOrNo("Do you want it instead of your wooden sword? [yes], [no] "))
+        {
+            player.Items.Remove("woodensword");
+            player.Items.Add("shinysword");
+            Console.Write("[wooden sword removed from inventory]\n[shiny sword added to inventory]\n\n" +
+                              "You replace your lacking monster-whacker with the seemingly more potent option " +
+                              "in front of you. Encouraged by the nice find, you head on with a cute strut ~");
+        }
+        else
+        {
+            Console.Write("\nYou've journeyed far with your trusty wooden sword at your side, and it's never " +
+                          "let you down. While tempting, you leave the shinier counterpart in front of you " +
+                          "for some other adventurer to be enamored by. You can feel your wooden sword blushing " +
+                          "while you trudge on.\n\n" +
+                          "Somewhere behind you, you can also feel the gaze of... something.");
+        }
+
+        Transition("[Press Enter]");
+        player.Location = "thirdroom";
     }
     
     static void ThirdRoom(Player player)
