@@ -2,19 +2,20 @@
 
 class Program
 {
+
     
     static void Main(string[] args)
-    
     {
-        Console.Write("Welcome to the world of disorderly conduct! " +
-                          "You are an old delinquent who never learnt to remedy their ways, " +
-                          "in a world ruled by the terrible 'redeemed'. You are trapped in a rehabilitation room, " +
-                          "and must escape into the outside where once more you may wreak havoc upon the world.");
+        Console.Write("Welcome to the dark dingy dungeon.");
         
         Transition("[Press Enter]"); // Check W3schools if anything f's up
 
 
+        // Instances of classes
+        
         Player player = new Player();
+        Enemy minotaur = new Enemy();
+        
         while (player.Location != "quit")
         {
             if (player.Location == "newgame")
@@ -41,37 +42,24 @@ class Program
             {
                 ThirdRoom(player);
             }
-
+            else if (player.Location == "backoutside")
+            {
+                BackOutside(player);
+            }
+            
+            else if (player.Location == "bossfight")
+            {
+                BossFight(player, minotaur);
+            }
+            else
             {
                 Console.Error.WriteLine(
                     $"You forgot to implement '{player.Location}'!");
             }
         }
-
-
-            string action1 = "check";
-            string action2 = "pick up";
-            string action3 = "use";
-            string action4 = "hit";
-
-            Console.WriteLine($"\nYou are surrounded by four walls of the most awful beige hue. " +
-                              $"A flickering ceiling-lamp is casting a depressing glow upon you surroundings. " +
-                              $"You have no items to your name, and are dressed in naught but a grey one-piece, " +
-                              $"spotted by what you assume to be bodily fluids. You have no sense of direction. " +
-                              $"One solitary door marked by countless scratches is crammed into a corner of the room. " +
-                              $"In the middle of the room, directly under the lamp, is a square wooden table with" +
-                              $" a box on top.");
-            
-            Console.Write($"\nWhat do you do? [{action1}], [{action2}], [{action3}], [{action4}] :");
-            
-    //Items
-
-    string woodensword = "wooden sword";
-    
-    string knife = "knife";
-    
-    string key = "key";
     }
+    
+    
 
     //Functions
     
@@ -120,8 +108,145 @@ class Program
         return answer1;
     }
 
+    static string FourChoices(string question1, string choice1, string choice2, string choice3, string choice4)
+    {
+        string answer1 = "";
+        do
+        {
+            Console.Write(question1) ;
+            answer1 = Console.ReadLine().Trim().ToLower();
+        } while (answer1 != choice1 && answer1 != choice2 && answer1 != choice3 && answer1 != choice4);
+
+        return answer1;
+    }
+
+    static int RollD6() // Chance in 16, 33, 49, 66 & 83%
+    {
+        return new Random().Next() % 6 + 1;
+    }
+
+    static int RollD4() // Chance in 25, 50 & 75%
+    {
+        return new Random().Next() % 4 + 1;
+    }
+
+    static int PlayerAttackCalc(Player player)
+    {
+        int output;
+        int critchance;
+        if (RollD6() <= player.Crit)
+        {
+            critchance = 2;
+        }
+        else
+        {
+            critchance = 1;
+        }
+
+        output = player.Damage * critchance;
+
+        return output;
+    } // Calculates player damage
+
+    static int PlayerBlockCalc(string action1) // Checks if player uses block or parry, and calculates blockrate
+    {
+        int blockrate;
+        if (action1 == "parry")
+        {
+            if (RollD4() <= 2)
+            {
+                blockrate = 100;
+            }
+            else
+            {
+                blockrate = -50;
+            }
+        }
+        else if (action1 == "block")
+        {
+            blockrate = 50;
+        }
+        else
+        {
+            blockrate = 0;
+        }
+
+        return blockrate;
+        
+    }
+
+    static int PlayerDefCalc(Player player)
+    {
+        int playerdefense;
+        if (player.Block == 100)
+        {
+            playerdefense = 0;
+        }
+        else if (player.Block == 50)
+        {
+            playerdefense = 50;
+        }
+        else if (player.Block == 0)
+        {
+            playerdefense = 100;
+        }
+        else
+        {
+            playerdefense = 150;
+        }
+        return playerdefense;
+        
+
+    }
+
+    static bool ChargeCheck(Enemy enemy)
+    {
+        if (enemy.ChargeToken == true)
+        {
+            enemy.ChargeToken = false;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    } // Checks if Minotaur is charging attack
+
+    static bool EnemyAttackSelection() // Checks which out of 2 attacks an enemy will choose
+    {
+        if (RollD6() <= 2)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        
+    }
+
+    static void EnemyAttack(Enemy minotaur, Player player, int playerdefense)
+    {
+
+        if (ChargeCheck(minotaur) == true)//sweep attack
+        {
+            player.Health -= (minotaur.Damage * playerdefense / 100) * 2;
+        }
+        else// normal attack
+        {
+            player.Health -= (minotaur.Damage * playerdefense / 100);
+        }
+    }
+
+    static void PlayerAttack(Player player, Enemy minotaur)
+    {
+        int damage = PlayerAttackCalc(player);
+        minotaur.Health -= damage;
+    }
+
     // Rooms
 
+    
     static void NewGame(Player player)
     {
         Console.Clear();
@@ -201,8 +326,8 @@ class Program
                     "\nYou attempt to materialize a key into your wanting hands through sheer force of will, " +
                     "but unfortunately the finer mechanisms behind such magics elude you, " +
                     "Defeated, and left with a pulsing headache, you enter the door " +
-                    "to your left. Alas. [-5 sanity] ");
-                player.Sanity -= 5;
+                    "to your left. Alas. [-5 health] ");
+                player.Health -= 5;
 
                 player.Location = "thirdroom";
             }
@@ -223,6 +348,7 @@ class Program
         } else if (direction == "left")
         {
             Console.Write("\nYou enter the door to your left. ");
+            player.Location = "thirdroom";
         }
 
         Transition("[Press Enter]");
@@ -236,6 +362,7 @@ class Program
         {
             player.Items.Remove("woodensword");
             player.Items.Add("shinysword");
+            player.Equip = "shinysword)";
             Console.Write("[wooden sword removed from inventory]\n[shiny sword added to inventory]\n\n" +
                               "You replace your lacking monster-whacker with the seemingly more potent option " +
                               "in front of you. Encouraged by the nice find, you head on with a cute strut ~");
@@ -256,19 +383,107 @@ class Program
     static void ThirdRoom(Player player)
     {
         Console.Clear();
-        Console.ReadLine();
+        Console.WriteLine("On the floor before you lies a lifeless corpse. \n" +
+                          "Its hand is clasped around something shiny. \n");
+        if (AskYesOrNo("Do you loot the corpse or leave it? [yes], [no] "))
+        {
+            Console.WriteLine("You pick up an old silver necklace.");
+            if (RollD6() >= 3)
+            {
+                Console.WriteLine("[blessed amulet] added to inventory. \n\nA warm feeling spreads over your body. " +
+                                  "You can feel your fortune increasing! ");
+                player.Items.Add("blessed amulet");
+            }
+            else
+            {
+                    Console.WriteLine("[cursed amulet] added to inventory.\n\nA cold shiver runs down your spine. " +
+                                      "You feel as if your luck has left you... ");
+                    player.Items.Add("cursed amulet");
+                    
+            }
+        }
+
+        player.Location = "backoutside";
+
+        Console.WriteLine("You leave the corpse and continue into the next room.");
+        Transition("[Press Enter]");
+        
     }
 
+    static void BackOutside(Player player)
+    {
+        Console.Clear();
+        Console.Write("You finally exit the dungeon. A whiff of fresh air runs along your cheeks. However, " +
+                      "off in the distance you hear a rumbling sound, and a far more sinister air soon " +
+                      "assaults your senses. You see the image of a hulking minotaur approach.");
 
+        player.Location = "bossfight";
+        Transition("[Press Enter]");
+    }
+
+    static void BossFight(Player player, Enemy enemy)
+    {
+        Console.Clear();
+        enemy.Health = 1000;
+        enemy.Damage = 100;
+        
+        
+
+        while (player.Health > 0 && enemy.Health > 0)
+        {
+            string action = FourChoices("[attack], [block], [parry], [jump]",
+                "attack", "block", "parry", "jump");
+            if (ChargeCheck(enemy) == true)
+            {
+                if (action == "jump")
+                {
+                    player.Crit = 6;
+                    PlayerAttack(player, enemy);
+                    player.Crit = 1;
+                    Console.WriteLine("");
+                }
+                
+                else if (action == "attack")
+                {
+                    PlayerAttack(player, enemy);
+                    Console.WriteLine("");
+                }
+                else if (action == "block")
+                    
+
+            }
+
+            EnemyAttack(enemy, player, );
+            
+                
+            
+
+        }
+
+        Transition("[Press Enter]");
+    }
 
     //Classes
 
     class Player
     {
         public string Name = "";
-        public int Sanity = 100;
+        public int Health = 500;
+        public int Damage = 100;
+        public int Block = 0; 
+        public int Crit = 1;
+        public string Equip = "woodensword";
         public List<string> Items = new List<string>();
         public string Location = "newgame";
     }
-    
+
+    class Enemy
+    {
+        public string Name = "";
+        public int Health = 500;
+        public int Damage = 50;
+        public int Block = 0;
+        public bool ChargeToken = false;
+    }
+
 }
