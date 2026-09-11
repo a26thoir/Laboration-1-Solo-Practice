@@ -6,14 +6,18 @@ class Program
     
     static void Main(string[] args)
     {
-        Console.Write("Welcome to the dark dingy dungeon.");
+        gamestart:
+
+        Console.Clear();
+        
+        Console.Write("You awaken in a dark room, with only a sliver of light trickling through a crack in the roof. " +
+                      "You don't remember how you got here, or what you were doing before you lost consciousness. " +
+                      "The only thing you remember is your name... Right?");
         
         Transition("[Press Enter]"); // Check W3schools if anything f's up
 
 
         // Instances of classes
-        
-        gamestart:
         
         Player player = new Player();
         Enemy minotaur = new Enemy();
@@ -137,6 +141,11 @@ class Program
         return answer1;
     }
 
+    static int RollD100() // Percentage Chance
+    {
+        return new Random().Next() % 100 + 1;
+    }
+
     static int RollD6() // Chance in 16, 33, 49, 66 & 83%
     {
         return new Random().Next() % 6 + 1;
@@ -151,9 +160,12 @@ class Program
     {
         int output;
         int critchance;
-        if (RollD6() <= player.Crit)
+        if (RollD100() <= player.Crit)
         {
             critchance = 2;
+
+            Console.WriteLine("A critical hit! ");
+
         }
         else
         {
@@ -169,7 +181,7 @@ class Program
     {
         int damage = PlayerAttackCalc(player);
         minotaur.Health -= damage;
-        Console.Write($"{player.Name} deals {damage} damage. ");
+        Console.WriteLine($"{player.Name} deals {damage} damage. ");
     }
 
     static int PlayerBlockCalc(string action1) // Checks if player uses block or parry, and calculates blockrate
@@ -255,15 +267,59 @@ class Program
         {
             player.Health -= (minotaur.Damage * playerdefense / 100) * 2;
 
-            Console.Write($"The {minotaur.Name} hits you with its signature ¤~ SWEEP ATTACK ~¤ {player.Name} takes [{minotaur.Damage * 2}] damage. ");
+            if (playerdefense == 100)
+            {
+                Console.Write(
+                    $"The {minotaur.Name} hits you with its signature ¤~ SWEEP ATTACK ~¤\n{player.Name} takes [{(minotaur.Damage * playerdefense / 100) * 2}] damage. ");
+            }
+            
+            else if (playerdefense == 50)
+            {
+                Console.Write(
+                    $"The {minotaur.Name} hits you with its signature ¤~ SWEEP ATTACK ~¤\nYou successfully [block] some of the incoming damage" +
+                    $"\n{player.Name} takes [{(minotaur.Damage * playerdefense / 100) * 2}] damage. ");
+            }
+            else if (playerdefense == 150)
+            {
+                Console.Write(
+                    $"You prepare to [parry] the enemy attack...\n... but your timing is way off. The {minotaur.Name} hits you extra hard with its " +
+                    $"signature ¤~ SWEEP ATTACK ~¤\n{player.Name} takes [{(minotaur.Damage * playerdefense / 100) * 2}] damage. ");
+            }
+            else
+                Console.Write(
+                    $"You prepare to [parry] the enemy attack...\n... and your timing is so on! The {minotaur.Name}'s posture breaks and it's dazed" +
+                    $" for the rest of the turn\n{player.Name} takes [{(minotaur.Damage * playerdefense / 100) * 2}] damage. ");
+
         }
         else// normal attack
         {
             player.Health -= (minotaur.Damage * playerdefense / 100);
 
-            Console.Write(
-                $"The {minotaur.Name} hits you with an ordinary attack. {player.Name} takes [{minotaur.Damage}] damage. ");
+            if (playerdefense == 100)
+            {
+                Console.Write(
+                    $"The {minotaur.Name} hits you with an ordinary attack. {player.Name} takes [{minotaur.Damage * playerdefense / 100}] damage. ");
+            }
+            else if (playerdefense == 50)
+            {
+                Console.Write(
+                    $"The {minotaur.Name} hits you with an ordinary attack.\nYou successfully [block] some of the incoming damage" +
+                    $"\n{player.Name} takes [{minotaur.Damage * playerdefense / 100}] damage. ");
+            }
+            else if (playerdefense == 150)
+            {
+                Console.Write(
+                    $"You prepare to [parry] the enemy attack...\n... but your timing is way off. The {minotaur.Name} hits you extra hard with an ordinary attack." +
+                    $" {player.Name} takes [{minotaur.Damage * playerdefense / 100}] damage. ");
+            }
+            else
+                Console.Write(
+                    $"You prepare to [parry] the enemy attack...\n... and your timing is so on! The {minotaur.Name}'s posture breaks and it's dazed " +
+                    $"for the rest of the turn {player.Name} takes [{minotaur.Damage * playerdefense / 100}] damage. ");
         }
+
+        minotaur.ChargeToken = false;
+
     }
 
     
@@ -277,7 +333,7 @@ class Program
         string playername = "";
         do
         {
-            playername = Ask("What is your name, delinquent? ");
+            playername = Ask("What is your name? ");
         } while (!AskYesOrNo($"So, {playername} it is? [yes/ ok], [no] "));
 
         player.Name = playername;
@@ -288,12 +344,12 @@ class Program
     static void TableRoom(Player player)
     {
         Console.Clear();
-        player.Items.Add("WoodenSword");
-        Console.WriteLine("You are equipped with one wooden Sword, and your task " +
-                          "is to slay the monster at the end of the adventure.\n" +
+        Console.WriteLine("You are equipped with a weathered walking cane, and lacking any grander " +
+                          "purpose for the moment, you might as well try having a look around this place.\n" +
                           "In front of you is a stone table with two items on it," +
                           "a knife and a key. " +
-                          "You can only pick up one of these items.\n");
+                          "You can only pick up one of these items, because, you realize, you've only" +
+                          "got one arm.\n");
 
         string responsetoitems;
         do
@@ -303,8 +359,10 @@ class Program
 
         if (responsetoitems == "knife")
         {
-            player.Items.Add("knife");
-            Console.WriteLine("[knife] was added to inventory. ");
+            
+            Console.WriteLine($"[{player.Equip} unequipped & removed from inventory]\n[knife] was equipped.");
+            player.Equip = "knife";
+            player.Damage = 75;
         }
         else if (responsetoitems == "key")
         {
@@ -325,7 +383,7 @@ class Program
     {
         Console.Clear();
         Console.WriteLine("You exit the room and find yourself standing in a dark " +
-                          "hallway. You can either enter another room on your right " +
+                          "hallway. You can either approach a door to your right " +
                           "side, or continue down the hallway on your left. ");
 
         string direction = "";
@@ -382,23 +440,29 @@ class Program
     {
         Console.Clear();
         Console.WriteLine("Inside the locked room you find a shiny sword!\n");
-        if (AskYesOrNo("Do you want it instead of your wooden sword? [yes], [no] "))
+        if (AskYesOrNo($"Do you want it instead of your {player.Equip}? [yes], [no] "))
         {
-            player.Items.Remove("woodensword");
-            player.Items.Add("shinysword");
-            player.Equip = "shinysword)";
-            Console.Write("[wooden sword removed from inventory]\n[shiny sword added to inventory]\n\n" +
+            Console.Write($"[{player.Equip} removed from inventory]\n[shiny sword added to inventory]\n\n" +
                               "You replace your lacking monster-whacker with the seemingly more potent option " +
                               "in front of you. Encouraged by the nice find, you head on with a cute strut ~");
+            player.Equip = "shinysword";
+            player.Damage = 100;
         }
-        else
+        else if (player.Equip == "walkingcane")
         {
-            Console.Write("\nYou've journeyed far with your trusty wooden sword at your side, and it's never " +
+            Console.Write($"\nYou've journeyed far with your trusty {player.Equip} at your side, and it's never " +
                           "let you down. While tempting, you leave the shinier counterpart in front of you " +
                           "for some other adventurer to be enamored by. You can feel your wooden sword blushing " +
                           "while you trudge on.\n\n" +
                           "Somewhere behind you, you can also feel the gaze of... something.");
         }
+
+        else
+
+            Console.Write($"\nA Shiny Sword would be much to heavy, and you're not sure you know how to use one " +
+                          $"anyways. You figure your {player.Equip} can handle any sticky situation you may be " +
+                          $"thrown into.\n\n " +
+                          $"Somewhere behind you, you can also feel the gaze of... something.");
 
         Transition("[Press Enter]");
         player.Location = "thirdroom";
@@ -471,6 +535,8 @@ class Program
         {
             playerturn:
 
+            Console.Clear();
+
             player.Defense = 100;
             player.Block = 0;
 
@@ -480,13 +546,26 @@ class Program
                 "attack", "block", "parry", "jump");
             if (ChargeCheck(enemy) == true && action == "jump")
             {
-                player.Crit = 6; //On a D6ROLL, a 6 crit value = guaranteed crit, which we want for this attack
+                player.Crit = 100; //On a D100ROLL, a 100 crit value = guaranteed crit, which we want for this attack
                 Console.WriteLine("At the last second, you swiftly jump over the minotaur's sweeping strike. " +
                                   "In mid-air, you bring your weapon down upon your perplexed assaulter " +
                                   "for a mighty, critical, ¤~ JUMP ATTACK ~¤");
                 PlayerAttack(player, enemy);
-                player.Crit = 1; //Reset Crit modifier to 1/6 probability
-                enemy.ChargeToken = false; //we don't want the minotaur to get stuck in it's sweep attack now do we?
+                if (player.Items.Contains("blessedamulet")) //Reset Crit modifier to respective probabilities depending on items
+                {
+                    player.Crit = 33;
+                }
+                else if (player.Items.Contains("cursedamulet"))
+                {
+                    player.Crit = 10;
+                }
+                else
+                {
+                    player.Crit = 15; 
+                }
+                enemy.ChargeToken = false; //we don't want the minotaur to get stuck in a sweep attack loop now do we?
+                Console.Write($"\n" +
+                              $"{enemy.Name} health: [{enemy.Health}]\n\n");
                 Transition("\n\nThe Minotaur is dazed for the remainder of its round. [Press Enter]");
 
                 goto playerturn;
@@ -494,8 +573,9 @@ class Program
             }
             else if (action == "attack")
             {
-                Console.Write("You str");
+                Console.Write("\nYou strike the enemy. ");
                 PlayerAttack(player, enemy);
+                Console.Write($"\n{enemy.Name} health: [{enemy.Health}]\n\n");
 
                 if (enemy.Health <= 0)
                 {
@@ -513,13 +593,36 @@ class Program
 
             else
             {
-                Console.Write("You jump. Good for you. The Minotaur puts down its battleaxe, applauds you, " +
-                              "picks the battleaxe up again, and continues its latest project of dismembering you. ");
+                Console.WriteLine("You jump. Good for you. The Minotaur puts down its battleaxe, applauds you, " +
+                              "picks the battleaxe up again, and continues its latest project of dismembering you. \n");
             }
             
             // Enemy Turn
 
+            if (enemy.ChargeToken == true)
+            {
+                goto enemyattack;
+            }
+
+            if (EnemyAttackSelection() == true)
+            {
+                Console.Write($"The {enemy.Name} lifts its battleaxe backwards and starts preparing for a powerful " +
+                                  $"sweeping attack. Watch out! ");
+                
+                enemy.ChargeToken = true;
+
+                Transition("[Press Enter]");
+
+                goto playerturn;
+
+            }
+            
+            enemyattack:
+            
             EnemyAttack(enemy, player, player.Defense);
+            
+            Console.Write($"\n{player.Name} health: [{player.Health}]\n\n");
+            Transition("[Press Enter]");
 
             if (player.Health <= 0)
             {
@@ -532,23 +635,24 @@ class Program
         if (enemy.Health <= 0)
         {
             player.Location = "winscreen";
+            Transition("YOU WON! [Press Enter]");
         }
 
         else player.Location = "losescreen";
 
-        Transition("[Press Enter]");
+        Transition("YOU DIED! [Press Enter]");
     }
 
     static void WinScreen(Player player)
     {
         Console.Clear();
-        Transition("Magnificent! You escaped the dungeon and slew the beast. [Press Enter]");
+        Transition("Magnificent! You escaped the dungeon and slew the beast. But it was all just a dream... [Press Enter]");
     }
 
     static void LoseScreen(Player player)
     {
         Console.Clear();
-        Transition("Better luck next time... [Press Enter]");
+        Transition("You were defeated by the dungeon, and... Yeah, well, you're dead. But it was all just a dream... [Press Enter]");
     }
 
     //Classes
@@ -557,11 +661,11 @@ class Program
     {
         public string Name = "";
         public int Health = 500;
-        public int Damage = 100;
+        public int Damage = 50;
         public int Block = 0;
         public int Defense = 100;
-        public int Crit = 1;
-        public string Equip = "woodensword";
+        public int Crit = 15;
+        public string Equip = "weathered cane";
         public List<string> Items = new List<string>();
         public string Location = "newgame";
     }
