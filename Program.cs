@@ -13,8 +13,11 @@ class Program
 
         // Instances of classes
         
+        gamestart:
+        
         Player player = new Player();
         Enemy minotaur = new Enemy();
+        minotaur.Name = "Minotaur";
         
         while (player.Location != "quit")
         {
@@ -51,6 +54,20 @@ class Program
             {
                 BossFight(player, minotaur);
             }
+            
+            else if (player.Location == "winscreen")
+            {
+                WinScreen(player);
+                goto gamestart;
+            }
+            
+            else if (player.Location == "losescreen")
+
+            {
+                LoseScreen(player);
+                goto gamestart;
+            }
+            
             else
             {
                 Console.Error.WriteLine(
@@ -147,6 +164,13 @@ class Program
 
         return output;
     } // Calculates player damage
+    
+    static void PlayerAttack(Player player, Enemy minotaur)
+    {
+        int damage = PlayerAttackCalc(player);
+        minotaur.Health -= damage;
+        Console.Write($"{player.Name} deals {damage} damage. ");
+    }
 
     static int PlayerBlockCalc(string action1) // Checks if player uses block or parry, and calculates blockrate
     {
@@ -203,7 +227,6 @@ class Program
     {
         if (enemy.ChargeToken == true)
         {
-            enemy.ChargeToken = false;
             return true;
         }
         else
@@ -231,18 +254,19 @@ class Program
         if (ChargeCheck(minotaur) == true)//sweep attack
         {
             player.Health -= (minotaur.Damage * playerdefense / 100) * 2;
+
+            Console.Write($"The {minotaur.Name} hits you with its signature ¤~ SWEEP ATTACK ~¤ {player.Name} takes [{minotaur.Damage * 2}] damage. ");
         }
         else// normal attack
         {
             player.Health -= (minotaur.Damage * playerdefense / 100);
+
+            Console.Write(
+                $"The {minotaur.Name} hits you with an ordinary attack. {player.Name} takes [{minotaur.Damage}] damage. ");
         }
     }
 
-    static void PlayerAttack(Player player, Enemy minotaur)
-    {
-        int damage = PlayerAttackCalc(player);
-        minotaur.Health -= damage;
-    }
+    
 
     // Rooms
 
@@ -413,9 +437,21 @@ class Program
     static void BackOutside(Player player)
     {
         Console.Clear();
-        Console.Write("You finally exit the dungeon. A whiff of fresh air runs along your cheeks. However, " +
-                      "off in the distance you hear a rumbling sound, and a far more sinister air soon " +
-                      "assaults your senses. You see the image of a hulking minotaur approach.");
+        Console.Write(
+            "You finally exit the dungeon, and shift at the harsh, albeit welcome, sunlight washing over you. " +
+            "You take a deep breath to take in the fresh air, and rid yourself of any reminder of the " +
+            "dungeon's moldy stench. However, your nose catches an odor quite different to what you " +
+            "were expecting...");
+
+        Transition("[Press Enter]");
+        
+        Console.Write("\nOff in the distance you hear a rumbling sound. A terrifying beast with a man's legs, the " +
+                      "torso of a bull, and the smell of unmentionables gone unwashed for weeks, approaches you. " +
+                      "A Labyrinth Minotaur. It wields a battleaxe of " +
+                      "considerable size, and it becomes immediately apparent that your fight is imminent " +
+                      "(mostly because the Minotaur screams 'I'LL KILL YOU AND DEVOUR YOUR CORPSE!!!' at the " +
+                      "top of its lungs. It also charges at you, battleaxe raised, eyes red with rage, and so on). " +
+                      "[Observational skill] +1 ");
 
         player.Location = "bossfight";
         Transition("[Press Enter]");
@@ -424,43 +460,95 @@ class Program
     static void BossFight(Player player, Enemy enemy)
     {
         Console.Clear();
+
+        Console.Write("");
+        
         enemy.Health = 1000;
         enemy.Damage = 100;
         
         
-
         while (player.Health > 0 && enemy.Health > 0)
         {
-            string action = FourChoices("[attack], [block], [parry], [jump]",
+            playerturn:
+
+            player.Defense = 100;
+            player.Block = 0;
+
+            Console.Write($"{player.Name} health: [{player.Health}]\n\n{enemy.Name} health: [{enemy.Health}]\n\n");
+            
+            string action = FourChoices("Choose an action:\n[attack], [block]\n[parry], [jump] ",
                 "attack", "block", "parry", "jump");
-            if (ChargeCheck(enemy) == true)
+            if (ChargeCheck(enemy) == true && action == "jump")
             {
-                if (action == "jump")
-                {
-                    player.Crit = 6;
-                    PlayerAttack(player, enemy);
-                    player.Crit = 1;
-                    Console.WriteLine("");
-                }
+                player.Crit = 6; //On a D6ROLL, a 6 crit value = guaranteed crit, which we want for this attack
+                Console.WriteLine("At the last second, you swiftly jump over the minotaur's sweeping strike. " +
+                                  "In mid-air, you bring your weapon down upon your perplexed assaulter " +
+                                  "for a mighty, critical, ¤~ JUMP ATTACK ~¤");
+                PlayerAttack(player, enemy);
+                player.Crit = 1; //Reset Crit modifier to 1/6 probability
+                enemy.ChargeToken = false; //we don't want the minotaur to get stuck in it's sweep attack now do we?
+                Transition("\n\nThe Minotaur is dazed for the remainder of its round. [Press Enter]");
+
+                goto playerturn;
                 
-                else if (action == "attack")
+            }
+            else if (action == "attack")
+            {
+                Console.Write("You str");
+                PlayerAttack(player, enemy);
+
+                if (enemy.Health <= 0)
                 {
-                    PlayerAttack(player, enemy);
-                    Console.WriteLine("");
+                    break;
                 }
-                else if (action == "block")
-                    
 
             }
-
-            EnemyAttack(enemy, player, );
             
+            else if (action == "block" || action == "parry")
                 
+            {
+                player.Block = PlayerBlockCalc(action);
+                player.Defense = PlayerDefCalc(player);
+            }
+
+            else
+            {
+                Console.Write("You jump. Good for you. The Minotaur puts down its battleaxe, applauds you, " +
+                              "picks the battleaxe up again, and continues its latest project of dismembering you. ");
+            }
+            
+            // Enemy Turn
+
+            EnemyAttack(enemy, player, player.Defense);
+
+            if (player.Health <= 0)
+            {
+                break;
+            }
             
 
         }
 
+        if (enemy.Health <= 0)
+        {
+            player.Location = "winscreen";
+        }
+
+        else player.Location = "losescreen";
+
         Transition("[Press Enter]");
+    }
+
+    static void WinScreen(Player player)
+    {
+        Console.Clear();
+        Transition("Magnificent! You escaped the dungeon and slew the beast. [Press Enter]");
+    }
+
+    static void LoseScreen(Player player)
+    {
+        Console.Clear();
+        Transition("Better luck next time... [Press Enter]");
     }
 
     //Classes
@@ -470,7 +558,8 @@ class Program
         public string Name = "";
         public int Health = 500;
         public int Damage = 100;
-        public int Block = 0; 
+        public int Block = 0;
+        public int Defense = 100;
         public int Crit = 1;
         public string Equip = "woodensword";
         public List<string> Items = new List<string>();
